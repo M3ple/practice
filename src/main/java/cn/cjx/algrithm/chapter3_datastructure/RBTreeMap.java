@@ -1,9 +1,8 @@
 package cn.cjx.algrithm.chapter3_datastructure;
 
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Random;
 
 /**
  * @功能描述:
@@ -35,43 +34,31 @@ public class RBTreeMap<K extends Comparable<K>, V> implements ST<K, V> {
         }
     }
 
-//    private Node<K,V> rotateRight(Node<K,V> node){
-//        Node<K,V> x = node.left;
-//        x.left = node;
-//        node.left=x.right;
-//        node.color =RED;
-//        x.right = node;
-//        x.color = BLACK;
-//        return x;
-//    }
-//
-//    private Node<K,V> rotateleft(Node<K,V> node){
-//        Node<K, V> x = node.left.right;
-//        node.left.right = x.left;
-//        x.left=node.left;
-//        node.left =x;
-//        return node;
-//    }
-
     private Node<K, V> rotateRight(Node<K, V> node) {
         Node<K, V> x = node.left;
         node.left = x.right;
         x.right = node;
+        // color变换
         x.color = node.color;
         node.color = RED;
         x.n = node.n;
-        node.n = size(node.left)+size(node.right)+1;
+        node.n = recaculateNum(node);
         return x;
+    }
+
+    private int recaculateNum(Node<K, V> node) {
+        return size(node.left) + size(node.right) + 1;
     }
 
     private Node<K, V> rotateleft(Node<K, V> node) {
         Node<K, V> x = node.right;
         node.right = x.left;
         x.left = node;
+        // color变换
         x.color = node.color;
         node.color = RED;
         x.n = node.n;
-        node.n = size(node.left)+size(node.right)+1;
+        node.n = recaculateNum(node);
         return x;
     }
 
@@ -91,8 +78,9 @@ public class RBTreeMap<K extends Comparable<K>, V> implements ST<K, V> {
     }
 
     private Node<K,V> put(K k, V v, Node<K,V> node) {
-        if (node==null)
-            return new Node<K,V>(k,v,RED,1);
+        if (node==null) {
+            return new Node<>(k,v,RED,1);
+        }
         int i = node.k.compareTo(k);
         if (i>0) {
             node.left = put(k, v, node.left);
@@ -101,12 +89,16 @@ public class RBTreeMap<K extends Comparable<K>, V> implements ST<K, V> {
         }else {
             node.v = v;
         }
-        if (isRed(node.right) && !isRed(node.left))
+        if (isRed(node.right) && !isRed(node.left)) {
             node=rotateleft(node);
-        if(isRed(node.left) && isRed(node.left.left))
+        }
+        if(isRed(node.left) && isRed(node.left.left)){
             node=rotateRight(node);
-        if (isRed(node.left) && isRed(node.right))
+        }
+        if (isRed(node.left) && isRed(node.right)){
             flipColor(node);
+        }
+        node.n = recaculateNum(node);
         return node;
     }
 
@@ -121,15 +113,17 @@ public class RBTreeMap<K extends Comparable<K>, V> implements ST<K, V> {
     }
 
     private Node<K,V> get(K k, Node<K,V> node) {
-        if (node==null)
+        if (node==null) {
             return null;
+        }
         int i = node.k.compareTo(k);
-        if (i>0)
+        if (i>0) {
             return get(k,node.left);
-        else if (i<0)
+        } else if (i<0) {
             return get(k,node.right);
-        else
+        } else {
             return node;
+        }
     }
 
     @Override
@@ -159,22 +153,55 @@ public class RBTreeMap<K extends Comparable<K>, V> implements ST<K, V> {
 
     @Override
     public K max() {
-        return null;
+        Node<K,V> max = max(root);
+        if (max==null){
+            return null;
+        }
+        return max.k;
     }
 
     @Override
     public K min() {
-        return null;
+        Node<K,V> min = min(root);
+        if (min==null){
+            return null;
+        }
+        return min.k;
+    }
+
+    public Node<K,V> max(Node<K,V> node) {
+        if (node==null){
+            return null;
+        }
+        if (node.right==null){
+            return node;
+        }
+        return max(node.right);
+    }
+
+    public Node<K,V> min(Node<K,V> node) {
+        if (node==null){
+            return null;
+        }
+        if (node.left==null){
+            return node;
+        }
+        return min(node.left);
     }
 
     @Override
     public int size() {
-        return 0;
+        return root!=null?root.n:0;
     }
 
     @Override
     public int rank(K k) {
-        return 0;
+        // TODO: 2020/6/5 rank方法有问题
+        if (k==null){
+            return -1;
+        }
+        Node<K, V> node = get(k, root);
+        return node.left.n;
     }
 
     @Override
@@ -182,67 +209,42 @@ public class RBTreeMap<K extends Comparable<K>, V> implements ST<K, V> {
         return null;
     }
 
-
     private Queue<K> getKeys(Queue<K> queue,Node<K,V> node,int lo, int hi){
-        if (node==null)
+        if (node==null || lo==-1 || hi==-1) {
             return queue;
+        }
         int rank = rank(node.k);
-        if (rank<lo)
+        if (rank<lo) {
             return getKeys(queue,node.right,lo,hi);
-        else if (rank>hi)
+        } else if (rank>hi) {
             return getKeys(queue,node.left,lo,hi);
-        getKeys(queue,node.left,lo,hi);
-        queue.offer(node.k);
-        getKeys(queue,node.right,lo,hi);
-        return queue;
-    }
-
-    private Queue<K> getKeys(Queue<K> queue,Node<K,V> node,K lo, K hi){
-        if (node==null || lo.compareTo(hi)>0)
-            return queue;
-        int i = node.k.compareTo(lo);
-        int j = node.k.compareTo(hi);
-        if (i<0)
-            return getKeys(queue,node.right,lo,hi);
-        else if (j>0)
-            return getKeys(queue,node.left,lo,hi);
-        getKeys(queue,node.left,lo,hi);
-        queue.offer(node.k);
-        getKeys(queue,node.right,lo,hi);
+        }else {
+            queue.offer(node.k);
+            getKeys(queue,node.left,lo,hi);
+            getKeys(queue,node.right,lo,hi);
+        }
         return queue;
     }
 
     @Override
     public Iterable<K> keys() {
-        return new Iterable<K>() {
-            @Override
-            public Iterator<K> iterator() {
-                keys.clear();
-                return getKeys(keys,root,rank(min()),rank(max())).iterator();
-            }
+        return () -> {
+            keys.clear();
+            return getKeys(keys, root, rank(min()), rank(max())).iterator();
         };
     }
 
     @Override
     public Iterable<K> keys(int lo, int hi) {
-        return new Iterable<K>() {
-            @Override
-            public Iterator<K> iterator() {
-                keys.clear();
-                return getKeys(keys,root,lo,hi).iterator();
-            }
+        return () ->{
+            keys.clear();
+            return getKeys(keys,root,lo,hi).iterator();
         };
     }
 
     @Override
     public Iterable<K> keys(K lo, K hi) {
-        return new Iterable<K>() {
-            @Override
-            public Iterator<K> iterator() {
-                keys.clear();
-                return getKeys(keys,root,lo,hi).iterator();
-            }
-        };
+        return null;
     }
 
     @Override
@@ -257,118 +259,40 @@ public class RBTreeMap<K extends Comparable<K>, V> implements ST<K, V> {
 
     @Override
     public Iterator<K> iterator() {
-        return null;
-    }
-    public void paintTree() throws CloneNotSupportedException {
-        printNode(root);
+        return keys().iterator();
     }
 
-    //-------------------打印树形状--------------------
-    private void printNode(Node<K, V> node) throws CloneNotSupportedException {
-        if (node == null)
-            return;
-        ;
-        Queue<Node<K, V>> layer = new Queue<>();
-        layer.offer(node);
-        List<Queue<Node<K, V>>> queues = new ArrayList<>();
-        queues.add(layer);
-        getLayer((Queue<Node<K, V>>) layer.clone(), queues);
-        printTree(queues);
-    }
-
-    private void printTree(List<Queue<Node<K, V>>> queues) {
-        int height = height();
-        int layer = 1;
-        if (queues.size()!= height)
-            throw new IllegalStateException("深度不一致");
-        h = height;
-        for (Queue<Node<K, V>> queue : queues) {
-            //某一层的起始偏移量
-            String headBlanksOffset= getSpaces(getOffset(layer));
-            String intervalSpaces = getSpaces(interval(layer));
-            StringBuilder sb = new StringBuilder();
-            int count = 1;
-            //某一层
-            sb.append(headBlanksOffset);
-            for (Iterator<Node<K, V>> iterator = queue.iterator(); iterator.hasNext(); ) {
-                Node<K, V> n = iterator.next();
-                if (layer==height){
-                    if (count%2==0){
-                        sb.append(n != null ? n.k : "--").append("  ");
-                    }else {
-                        sb.append(n != null ? n.k : "--").append(intervalSpaces);
-                    }
-                    count++;
-                }else {
-                    sb.append(n != null ? (n.color?("<"+n.k+">"):n.k.toString()): "--").append(intervalSpaces);
-                }
-            }
-            System.out.println(sb.toString());
-            layer++;
-        }
-    }
-
-    private int height() {
+    public int height() {
         return height(root);
     }
 
     private int height(Node<K, V> node) {
-        if (node==null)
+        if (node==null) {
             return 0;
+        }
         int left = height(node.left);
         int right = height(node.right);
         return Math.max(left,right)+1;
     }
 
-    private int getOffset(int layer) {
-        if(layer>h)
-            return 0;
-        int layerN = ++layer;
-        int interval = interval(layerN);
-        int i = (interval + 1) / 2;
-        int offset = getOffset(layerN);
-        return offset+i;
-    }
-
-    //获取指定层数的左右分支间隔数
-    private int interval(int layer) {
-        return layer>h?0:(2*interval(++layer)+1);
-    }
-
-    //获取指定个数的"  "
-    public String getSpaces(int n) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < n; i++) {
-            sb.append("  ");
-        }
-        return sb.toString();
-    }
-
-    private void getLayer(Queue<Node<K, V>> layer, List<Queue<Node<K, V>>> queues) throws CloneNotSupportedException {
-        boolean flag = true;
-        for (Iterator<Node<K, V>> iterator = layer.iterator(); iterator.hasNext(); ) {
-            Node<K, V> next = iterator.next();
-            if (next != null)
-                flag = false;
-        }
-        if (flag) {
-            queues.remove(queues.size() - 1);
-            return;
-        }
-        Queue<Node<K, V>> nextLayer = new Queue<>();
-        while (!layer.isEmpty()) {
-            Node<K, V> head = layer.poll();
-            if (head != null && head.left != null)
-                nextLayer.offer(head.left);
-            else
-                nextLayer.offer(null);
-            if (head != null && head.right != null)
-                nextLayer.offer(head.right);
-            else
-                nextLayer.offer(null);
-        }
-        queues.add(nextLayer);
-        getLayer((Queue<Node<K, V>>) nextLayer.clone(), queues);
-    }
     //-------------------seperator--------------------
+    public static void main(String[] args) {
+        RBTreeMap<Integer, String> st = new RBTreeMap<>();
+        Random r = new Random(10);
+        int limit = 50;
+        for (int i = 0; i < limit; i++) {
+//            st.put(k,st.get(k)!=null?st.get(k)+1:1);
+            String k = "a" + i;
+            st.put(r.nextInt(limit),k);
+        }
+//        for (int i = 0; i < st.size(); i++) {
+//            System.out.println(st.get(i));
+//        }
+        for (Integer integer : st.keys()) {
+            System.out.println(integer);
+        }
+        System.out.println(st.size());
+        System.out.println(st);
+        System.out.println(st.height());
+    }
 }

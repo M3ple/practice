@@ -63,22 +63,3 @@ public class TreeMapTestCase {
         }
     }
 }
-class RBTreeMapTestCase{
-    public static void main(String[] args) {
-        RBTreeMap<String, Integer> st = new RBTreeMap<>();
-        Random r = new Random(10);
-        for (int i = 0; i < 50; i++) {
-            String k = "a" + r.nextInt(10);
-            st.put(k,st.get(k)!=null?st.get(k)+1:1);
-        }
-//        for (int i = 0; i < 10; i++) {
-//            System.out.println(st.get("a" + i));
-//        }
-        try {
-            st.paintTree();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
-        System.out.println(st);
-    }
-}
