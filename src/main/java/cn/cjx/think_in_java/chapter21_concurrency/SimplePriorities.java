@@ -1,6 +1,9 @@
 package cn.cjx.think_in_java.chapter21_concurrency;//: concurrency/SimplePriorities.java
 // Shows the use of thread priorities.
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class SimplePriorities implements Runnable {
     private int countDown = 5;
     private volatile double d; // No optimization
@@ -45,13 +48,13 @@ public class SimplePriorities implements Runnable {
     }
 
     public static void main(String[] args) {
-//        ExecutorService exec = Executors.newCachedThreadPool();
-//        for (int i = 0; i < 5; i++) {
-//            exec.execute(new SimplePriorities(Thread.MIN_PRIORITY));
-//            exec.execute(new SimplePriorities(Thread.MAX_PRIORITY));
-//            exec.shutdown();
-//        }
-        f();
+        ExecutorService exec = Executors.newCachedThreadPool();
+        for (int i = 0; i < 5; i++) {
+            exec.execute(new SimplePriorities(Thread.MIN_PRIORITY));
+            exec.execute(new SimplePriorities(Thread.MAX_PRIORITY));
+        }
+        exec.shutdown();
+//        f();
     }
 } /* Output: (70% match)
 Thread[pool-1-thread-6,10,main]: 5
